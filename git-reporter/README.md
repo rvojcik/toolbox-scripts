@@ -21,3 +21,6 @@ set smtp_pass = "yourpassword"
 If you need more advanced configuration for your smtp check for mutt
 manual pages.
 
+Screenshot of email
+
+![Alt text](https://raw.githubusercontent.com/rvojcik/toolbox-scripts/master/git-reporter/images/git-reporter.png "Screenshot")

@@ -1,6 +1,6 @@
 #!/bin/bash
 #       
-# Git repository changes reporter v0.1
+# Git repository changes reporter v0.1.1
 #
 # Script chekout to specified branch, fetch (not pull) from remote 
 # and show differences between HEAD and remote using time period
@@ -91,6 +91,7 @@ do
             ;;
          o)
             output_type=$OPTARG
+            ;;
          b)
             # If not specified, use remote origin by default
             if [[ "$OPTARG" == *"/"*  ]] ; then 
