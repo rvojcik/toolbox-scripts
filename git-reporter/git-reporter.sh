@@ -1,6 +1,6 @@
 #!/bin/bash
 #       
-# Git repository changes reporter v0.1
+# Git repository changes reporter v0.1.1
 #
 # Script chekout to specified branch, fetch (not pull) from remote 
 # and show differences between HEAD and remote using time period
@@ -134,7 +134,7 @@ if [ -z "$time" ] ; then
 fi
 
 # Mail heading
-echo -e "</pre><h3>Report for $repository_path branch $branch ($time)</h3><br /><pre>" >> $output_file
+echo -e "</pre><h3>Report for $(basename $repository_path) branch $branch ($time)</h3><br /><pre>" >> $output_file
 new_line
 
 # Change directory to repository 
@@ -161,7 +161,7 @@ if [ $($git log $git_options --since "$time" --pretty="%h" HEAD..$branch | wc -l
     done
 
     if [[ "$output_type" == "mail" ]] ; then 
-        cat $output_file| $script_path/ansi2html.sh | mutt -s "GIT Report of $repository_path since $time" -e "set content_type=text/html" $mail
+        cat $output_file| $script_path/ansi2html.sh | mutt -s "GIT Report of $(basename $repository_path) since $time" -e "set content_type=text/html" $mail
     else
         # Cat and remove html tags
         cat $output_file | sed -r 's/<[\/a-zA-Z0-9]+[ ]*[\/a-zA-Z0-9]*>//g'
