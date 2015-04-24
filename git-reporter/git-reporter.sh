@@ -1,6 +1,6 @@
 #!/bin/bash
 #       
-# Git repository changes reporter v0.1.1
+# Git repository changes reporter v0.1
 #
 # Script chekout to specified branch, fetch (not pull) from remote 
 # and show differences between HEAD and remote using time period
@@ -142,25 +142,30 @@ cd $repository_path
 git checkout $short_branch -q
 git fetch &> /dev/null
 
-# Print git stat for changes
-$git diff $git_options --stat --since "$time" HEAD..$branch >> $output_file
-new_line
+# Check for changes, skip everything if there are no new commits
 
-# Print git log
-$git log $git_options --since "$time" --pretty=format:"%Cblue%cr%Creset | %Cred%h %Cgreen%s%Creset | %cn ( %ce )" HEAD..$branch >> $output_file
-new_line
+if [ $($git log $git_options --since "$time" --pretty="%h" HEAD..$branch | wc -l) -gt 0 ] ; then 
 
-echo -e "</pre><h4>Showing individual commits</h4><pre>" >> $output_file
-new_line
-for commit in `$git log $git_options --since "$time" --pretty="%h" HEAD..$branch` ; do 
-    $git show $git_options $commit >> $output_file
-done
+    # Print git stat for changes
+    $git diff $git_options --stat --since "$time" HEAD..$branch >> $output_file
+    new_line
 
-if [[ "$output_type" == "mail" ]] ; then 
-    cat $output_file| $script_path/ansi2html.sh | mutt -s "GIT Report of $repository_path since $time" -e "set content_type=text/html" $mail
-else
-    # Cat and remove html tags
-    cat $output_file | sed -r 's/<[\/a-zA-Z0-9]+[ ]*[\/a-zA-Z0-9]*>//g'
+    # Print git log
+    $git log $git_options --since "$time" --pretty=format:"%Cblue%cr%Creset | %Cred%h %Cgreen%s%Creset | %cn ( %ce )" HEAD..$branch >> $output_file
+    new_line
+
+    echo -e "</pre><h4>Showing individual commits</h4><pre>" >> $output_file
+    new_line
+    for commit in `$git log $git_options --since "$time" --pretty="%h" HEAD..$branch` ; do 
+        $git show $git_options $commit >> $output_file
+    done
+
+    if [[ "$output_type" == "mail" ]] ; then 
+        cat $output_file| $script_path/ansi2html.sh | mutt -s "GIT Report of $repository_path since $time" -e "set content_type=text/html" $mail
+    else
+        # Cat and remove html tags
+        cat $output_file | sed -r 's/<[\/a-zA-Z0-9]+[ ]*[\/a-zA-Z0-9]*>//g'
+    fi
 fi
 
 rm $output_file
