@@ -21,6 +21,15 @@ set smtp_pass = "yourpassword"
 If you need more advanced configuration for your smtp check for mutt
 manual pages.
 
+Example usage of script
+```
+git-reporter.sh -r /Git/toolbox-scripts/ -t "10 minutes ago" -m some@email.tld -b master
+```
+When you leaving office for vacation you can add it to cron and check your 
+repositories every morning (-t "24 hours ago"). 
+
+After vacation you will have your reports waiting for you in inbox.
+
 Screenshot of email
 
 ![Alt text](https://raw.githubusercontent.com/rvojcik/toolbox-scripts/master/git-reporter/images/git-reporter.png "Screenshot")
