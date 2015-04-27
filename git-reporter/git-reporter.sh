@@ -42,8 +42,9 @@ show_help() {
         echo -e "\t  \t\t  you can use seconds ago, days ago, month ago or specific time and date"
         echo -e "\t-m\t\t- mail address"
         echo -e "\t-o\t\t- output, mail or stdout (default: mail)"
-        echo -e "\t-b\t\t- branch to be checked (default: master)"
+        echo -e "\t-b\t\t- branch to be checked (default: origin/master)"
         echo -e "\t-q\t\t- quite mode, supress all unwanted outputs (useful for cron)"
+        echo -e "\t-a\t\t- show all changes in time period (default: show not pulled commits only)"
         echo -e "\t-h\t\t- this message"
         exit 1
 }
@@ -78,7 +79,7 @@ fi
 
 
 # Parsing arguments
-while getopts “t:r:m:o:b:hq” OPTION
+while getopts “t:r:m:o:b:hqa” OPTION
 do
      case $OPTION in
          r)
@@ -107,12 +108,16 @@ do
          q)
              silance_mode=yes
              ;;
+         a)
+             show_all=yes
+             ;;
          h)
              show_help
              ;;
      esac
 done
 
+# Output filter
 output_filter() {
     while read output ; do 
         if [[ "$silance_mode" == "yes" ]] ; then
@@ -124,20 +129,24 @@ output_filter() {
 }
 
 
+# Set default output mode
 if [[ "$output_type" == "" ]] ; then 
     output_type=mail
 fi
 
+# Set default branch
 if [[ "$branch" == "" ]] ; then 
     branch=origin/master
     short_branch=master
 fi
 
+# Repository path is required 
 if [ -z "$repository_path" ] ; then
     echo "No repository path entered"
     show_help
 fi
 
+# Mail address is required when output type is mail
 if [[ "$mail" == "" ]] && [[ "$output_type" == "mail" ]] ; then
     echo "No email address entered"
     show_help
@@ -148,10 +157,6 @@ if [ -z "$time" ] ; then
     time="12 hours ago"
 fi
 
-# Mail heading
-echo -e "</pre><h3>Report for $(basename $repository_path) branch $branch ($time)</h3><br /><pre>" >> $output_file
-new_line
-
 # Change directory to repository 
 echo "Changing directory to $repository_path" | output_filter
 cd $repository_path
@@ -160,23 +165,35 @@ git checkout $short_branch 2>&1 | output_filter
 echo "Fetching from remote" | output_filter
 git fetch 2>&1 | output_filter
 
+# Prepare commits range
+if [[ "$show_all" == "yes" ]] ; then
+    range="$($git rev-list HEAD --pretty='%h' | tail -n 1)..$branch"
+else
+    range="HEAD..$branch"
+fi
+
+# Mail heading
+echo -e "</pre><h3>Report for $(basename $repository_path) branch $range ($time)</h3><br /><pre>" >> $output_file
+new_line
+
+
 # Check for changes, skip everything if there are no new commits
 echo "Finding changes"
-$git log $git_options --since "$time" --pretty="%h" HEAD..$branch 2>&1 | output_filter
+$git log $git_options --since "$time" --pretty="%h" $range 2>&1 | output_filter
 
-if [ $($git log $git_options --since "$time" --pretty="%h" HEAD..$branch | wc -l) -gt 0 ] ; then 
+if [ $($git log $git_options --since "$time" --pretty="%h" $range | wc -l) -gt 0 ] ; then 
     
     # Print git stat for changes
-    $git diff $git_options --stat --since "$time" HEAD..$branch >> $output_file
+    $git diff $git_options --stat --since "$time" $range >> $output_file
     new_line
 
     # Print git log
-    $git log $git_options --since "$time" --pretty=format:"%Cblue%cr%Creset | %Cred%h %Cgreen%s%Creset | %cn ( %ce )" HEAD..$branch >> $output_file
+    $git log $git_options --since "$time" --pretty=format:"%Cblue%cr%Creset | %Cred%h %Cgreen%s%Creset | %cn ( %ce )" $range >> $output_file
     new_line
 
     echo -e "</pre><h4>Showing individual commits</h4><pre>" >> $output_file
     new_line
-    for commit in `$git log $git_options --since "$time" --pretty="%h" HEAD..$branch` ; do 
+    for commit in `$git log $git_options --since "$time" --pretty="%h" $range` ; do 
         $git show $git_options $commit >> $output_file
     done
 
