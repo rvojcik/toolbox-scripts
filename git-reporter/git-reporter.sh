@@ -114,12 +114,13 @@ do
 done
 
 output_filter() {
-    read output
-    if [[ "$silance_mode" == "yes" ]] ; then
-        return 0
-    else
-        echo "$output"
-    fi
+    while read output ; do 
+        if [[ "$silance_mode" == "yes" ]] ; then
+            return 0
+        else
+            echo "$output"
+        fi
+    done
 }
 
 
@@ -161,7 +162,7 @@ git fetch 2>&1 | output_filter
 
 # Check for changes, skip everything if there are no new commits
 echo "Finding changes"
-$git log $git_options --since "$time" --pretty="%h" HEAD..$branch | output_filter
+$git log $git_options --since "$time" --pretty="%h" HEAD..$branch 2>&1 | output_filter
 
 if [ $($git log $git_options --since "$time" --pretty="%h" HEAD..$branch | wc -l) -gt 0 ] ; then 
     
