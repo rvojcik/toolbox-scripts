@@ -178,7 +178,7 @@ new_line
 
 
 # Check for changes, skip everything if there are no new commits
-echo "Finding changes"
+echo "Finding changes" | output_filter
 $git log $git_options --since "$time" --pretty="%h" $range 2>&1 | output_filter
 
 if [ $($git log $git_options --since "$time" --pretty="%h" $range | wc -l) -gt 0 ] ; then 
