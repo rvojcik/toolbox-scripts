@@ -179,12 +179,13 @@ new_line
 
 # Check for changes, skip everything if there are no new commits
 echo "Finding changes" | output_filter
-$git log $git_options --since "$time" --pretty="%h" $range 2>&1 | output_filter
+git_log_commits=$($git log $git_options --since "$time" --pretty="%h" $range 2>/dev/null)
+echo "$git_log_commits" | output_filter
 
-if [ $($git log $git_options --since "$time" --pretty="%h" $range | wc -l) -gt 0 ] ; then 
-    
+if [ $(echo "$git_log_commits" | wc -l) -gt 0 ] ; then 
+   
     # Print git stat for changes
-    $git diff $git_options --stat --since "$time" $range >> $output_file
+    $git log $git_options --stat --since "$time" --pretty="%x20" $range >> $output_file
     new_line
 
     # Print git log
