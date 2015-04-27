@@ -43,6 +43,7 @@ show_help() {
         echo -e "\t-m\t\t- mail address"
         echo -e "\t-o\t\t- output, mail or stdout (default: mail)"
         echo -e "\t-b\t\t- branch to be checked (default: master)"
+        echo -e "\t-q\t\t- quite mode, supress all unwanted outputs (useful for cron)"
         echo -e "\t-h\t\t- this message"
         exit 1
 }
@@ -77,7 +78,7 @@ fi
 
 
 # Parsing arguments
-while getopts “t:r:m:o:b:h” OPTION
+while getopts “t:r:m:o:b:hq” OPTION
 do
      case $OPTION in
          r)
@@ -103,11 +104,23 @@ do
             fi
             
             ;;
+         q)
+             silance_mode=yes
+             ;;
          h)
              show_help
              ;;
      esac
 done
+
+output_filter() {
+    read output
+    if [[ "$silance_mode" == "yes" ]] ; then
+        return 0
+    else
+        echo "$output"
+    fi
+}
 
 
 if [[ "$output_type" == "" ]] ; then 
@@ -116,6 +129,7 @@ fi
 
 if [[ "$branch" == "" ]] ; then 
     branch=origin/master
+    short_branch=master
 fi
 
 if [ -z "$repository_path" ] ; then
@@ -138,14 +152,19 @@ echo -e "</pre><h3>Report for $(basename $repository_path) branch $branch ($time
 new_line
 
 # Change directory to repository 
+echo "Changing directory to $repository_path" | output_filter
 cd $repository_path
-git checkout $short_branch -q
-git fetch &> /dev/null
+echo "Checkout to $short_branch" | output_filter
+git checkout $short_branch 2>&1 | output_filter
+echo "Fetching from remote" | output_filter
+git fetch 2>&1 | output_filter
 
 # Check for changes, skip everything if there are no new commits
+echo "Finding changes"
+$git log $git_options --since "$time" --pretty="%h" HEAD..$branch | output_filter
 
 if [ $($git log $git_options --since "$time" --pretty="%h" HEAD..$branch | wc -l) -gt 0 ] ; then 
-
+    
     # Print git stat for changes
     $git diff $git_options --stat --since "$time" HEAD..$branch >> $output_file
     new_line
@@ -161,6 +180,7 @@ if [ $($git log $git_options --since "$time" --pretty="%h" HEAD..$branch | wc -l
     done
 
     if [[ "$output_type" == "mail" ]] ; then 
+        echo "Sending email to $mail" | output_filter
         cat $output_file| $script_path/ansi2html.sh | mutt -s "GIT Report of $(basename $repository_path) since $time" -e "set content_type=text/html" $mail
     else
         # Cat and remove html tags

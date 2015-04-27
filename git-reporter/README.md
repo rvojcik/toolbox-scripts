@@ -18,6 +18,15 @@ set smtp_url = "smtps://your_login_to_mailserver@mx.mailserver.tld:465/"
 set smtp_pass = "yourpassword"
 ```
 
+if you want to use port 587 instead of 465 you have to use this
+```
+set from=your.name@host.tld
+set use_from=yes
+set smtp_url = "smtp://your_login_to_mailserver@mx.mailserver.tld:587/"
+set smtp_pass = "yourpassword"
+```
+
+
 If you need more advanced configuration for your smtp check for mutt
 manual pages.
 
