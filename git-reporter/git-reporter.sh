@@ -167,22 +167,21 @@ git fetch 2>&1 | output_filter
 
 # Prepare commits range
 if [[ "$show_all" == "yes" ]] ; then
-    range="$($git rev-list HEAD --pretty='%h' | tail -n 1)..$branch"
+    #range="$($git rev-list HEAD --pretty='%h' | tail -n 1)..$branch"
+    range="--all"
 else
     range="HEAD..$branch"
 fi
 
 # Mail heading
 echo -e "</pre><h3>Report for $(basename $repository_path) branch $range ($time)</h3><br /><pre>" >> $output_file
-new_line
-
 
 # Check for changes, skip everything if there are no new commits
 echo "Finding changes" | output_filter
 git_log_commits=$($git log $git_options --since "$time" --pretty="%h" $range 2>/dev/null)
 echo -n "$git_log_commits" | output_filter
 
-if [ $(echo -n "$git_log_commits" | wc -l) -gt 0 ] ; then 
+if [ $(echo -n "$git_log_commits" | wc -c) -gt 0 ] ; then 
    
     # Print git stat for changes
     $git log $git_options --stat --since "$time" --pretty="%x20" $range >> $output_file
